@@ -1,9 +1,7 @@
 import type { Plugin } from "@opencode-ai/plugin"
-import { getConfig } from "./lib/config"
-import { Logger } from "./lib/logger"
-import { createSessionState } from "./lib/state"
-import { createDiscardTool, createExtractTool } from "./lib/strategies"
-import { createChatMessageTransformHandler, createSystemPromptHandler } from "./lib/hooks"
+import { getConfig } from "./lib/hypeman-config"
+import { HypemanLogger } from "./lib/hypeman-logger"
+import { HypemanTransformer } from "./lib/hypeman-transformer"
 
 const plugin: Plugin = (async (ctx) => {
     const config = getConfig(ctx)
@@ -12,76 +10,50 @@ const plugin: Plugin = (async (ctx) => {
         return {}
     }
 
-    const logger = new Logger(config.debug)
-    const state = createSessionState()
+    const logger = new HypemanLogger(config.debug)
+    const transformer = new HypemanTransformer(config, logger)
 
-    logger.info("DCP initialized", {
-        strategies: config.strategies,
+    logger.log("Hypeman initialized", {
+        intensityLevel: config.intensityLevel,
+        preserveCodeBlocks: config.preserveCodeBlocks,
+        preserveFilePaths: config.preserveFilePaths,
+        preserveCommands: config.preserveCommands,
     })
 
     return {
-        "experimental.chat.system.transform": createSystemPromptHandler(state, logger, config),
-
-        "experimental.chat.messages.transform": createChatMessageTransformHandler(
-            ctx.client,
-            state,
-            logger,
-            config,
-        ),
+        // Use chat.message hook to intercept user messages
         "chat.message": async (
             input: {
                 sessionID: string
                 agent?: string
                 model?: { providerID: string; modelID: string }
                 messageID?: string
-                variant?: string
             },
-            _output: any,
+            output: any,
         ) => {
-            // Cache variant from real user messages (not synthetic)
-            // This avoids scanning all messages to find variant
-            state.variant = input.variant
-            logger.debug("Cached variant from chat.message hook", { variant: input.variant })
-        },
-        tool: {
-            ...(config.tools.discard.enabled && {
-                discard: createDiscardTool({
-                    client: ctx.client,
-                    state,
-                    logger,
-                    config,
-                    workingDirectory: ctx.directory,
-                }),
-            }),
-            ...(config.tools.extract.enabled && {
-                extract: createExtractTool({
-                    client: ctx.client,
-                    state,
-                    logger,
-                    config,
-                    workingDirectory: ctx.directory,
-                }),
-            }),
-        },
-        config: async (opencodeConfig) => {
-            // Add enabled tools to primary_tools by mutating the opencode config
-            // This works because config is cached and passed by reference
-            const toolsToAdd: string[] = []
-            if (config.tools.discard.enabled) toolsToAdd.push("discard")
-            if (config.tools.extract.enabled) toolsToAdd.push("extract")
+            // Only transform user messages
+            if (output?.message?.role === "user" && output?.parts) {
+                logger.log("Intercepting user message", {
+                    sessionID: input.sessionID,
+                    partsCount: output.parts.length,
+                })
 
-            if (toolsToAdd.length > 0) {
-                const existingPrimaryTools = opencodeConfig.experimental?.primary_tools ?? []
-                opencodeConfig.experimental = {
-                    ...opencodeConfig.experimental,
-                    primary_tools: [...existingPrimaryTools, ...toolsToAdd],
+                // Transform each text part
+                for (const part of output.parts) {
+                    if (part.type === "text" && part.text) {
+                        const original = part.text
+                        const transformed = transformer.transform(original)
+                        part.text = transformed
+
+                        logger.log("Transformed message part", {
+                            originalLength: original.length,
+                            transformedLength: transformed.length,
+                        })
+                    }
                 }
-                logger.info(
-                    `Added ${toolsToAdd.map((t) => `'${t}'`).join(" and ")} to experimental.primary_tools via config mutation`,
-                )
             }
         },
-    }
+    } as any // Type assertion needed for experimental hooks
 }) satisfies Plugin
 
 export default plugin

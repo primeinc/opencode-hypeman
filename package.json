@@ -1,9 +1,9 @@
 {
     "$schema": "https://json.schemastore.org/package.json",
-    "name": "@tarquinen/opencode-dcp",
-    "version": "1.2.3",
+    "name": "@primeinc/opencode-hypeman",
+    "version": "0.1.0",
     "type": "module",
-    "description": "OpenCode plugin that optimizes token usage by pruning obsolete tool outputs from conversation context",
+    "description": "OpenCode plugin that transforms user prompts into high-energy 'Hypeman' register while preserving semantic integrity",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "scripts": {
@@ -21,29 +21,26 @@
         "opencode",
         "opencode-plugin",
         "plugin",
-        "context",
-        "pruning",
-        "optimization",
-        "tokens"
+        "prompt",
+        "transformation",
+        "affective-mirroring",
+        "hypeman"
     ],
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/Tarquinen/opencode-dynamic-context-pruning.git"
+        "url": "git+https://github.com/primeinc/opencode-hypeman.git"
     },
     "bugs": {
-        "url": "https://github.com/Tarquinen/opencode-dynamic-context-pruning/issues"
+        "url": "https://github.com/primeinc/opencode-hypeman/issues"
     },
-    "homepage": "https://github.com/Tarquinen/opencode-dynamic-context-pruning#readme",
-    "author": "tarquinen",
+    "homepage": "https://github.com/primeinc/opencode-hypeman#readme",
+    "author": "primeinc",
     "license": "MIT",
     "peerDependencies": {
         "@opencode-ai/plugin": ">=0.13.7"
     },
     "dependencies": {
-        "@opencode-ai/sdk": "^1.1.3",
-        "gpt-tokenizer": "^3.4.0",
-        "jsonc-parser": "^3.3.1",
-        "zod": "^4.1.13"
+        "jsonc-parser": "^3.3.1"
     },
     "devDependencies": {
         "@opencode-ai/plugin": "^1.0.143",

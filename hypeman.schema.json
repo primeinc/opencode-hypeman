@@ -1,0 +1,44 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Hypeman Configuration",
+    "description": "Configuration schema for the OpenCode Hypeman plugin",
+    "type": "object",
+    "properties": {
+        "$schema": {
+            "type": "string",
+            "description": "JSON Schema reference"
+        },
+        "enabled": {
+            "type": "boolean",
+            "description": "Enable or disable the plugin",
+            "default": true
+        },
+        "debug": {
+            "type": "boolean",
+            "description": "Enable debug logging to ~/.config/opencode/logs/hypeman/",
+            "default": false
+        },
+        "intensityLevel": {
+            "type": "string",
+            "description": "Intensity level of the hype transformation",
+            "enum": ["low", "medium", "high"],
+            "default": "medium"
+        },
+        "preserveCodeBlocks": {
+            "type": "boolean",
+            "description": "Preserve code blocks during transformation",
+            "default": true
+        },
+        "preserveFilePaths": {
+            "type": "boolean",
+            "description": "Preserve file paths during transformation",
+            "default": true
+        },
+        "preserveCommands": {
+            "type": "boolean",
+            "description": "Preserve command-line commands during transformation",
+            "default": true
+        }
+    },
+    "additionalProperties": false
+}

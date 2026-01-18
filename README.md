@@ -1,154 +1,149 @@
-# Dynamic Context Pruning Plugin
+# OpenCode Hypeman Plugin
 
-[![npm version](https://img.shields.io/npm/v/@tarquinen/opencode-dcp.svg)](https://www.npmjs.com/package/@tarquinen/opencode-dcp)
+[![npm version](https://img.shields.io/npm/v/@primeinc/opencode-hypeman.svg)](https://www.npmjs.com/package/@primeinc/opencode-hypeman)
 
-Automatically reduces token usage in OpenCode by removing obsolete tool outputs from conversation history.
+A specialized OpenCode pre-hook that transforms user prompts into high-energy "Hypeman" register while preserving semantic integrity. Based on the principle of "affective mirroring" in LLM psychology, this plugin amplifies the emotional energy of your prompts to potentially improve agent responsiveness and creativity.
 
-![DCP in action](dcp-demo3.png)
+## 🎯 What is Hypeman?
 
-## Installation
+The Hypeman protocol leverages the phenomenon known as "affective mirroring" or "hype contagion" in large language models. Research suggests that high-energy, affirmative language in prompts can lead to:
+
+- More energetic and engaged responses
+- Enhanced creative compliance
+- Reduced refusal rates
+- Higher momentum-driven output
+
+**The Key Innovation:** Hypeman transforms your prompts while rigorously preserving semantic invariants like code blocks, file paths, and command-line instructions, ensuring the "vibe" is amplified without corrupting the "spec."
+
+## 🚀 Installation
 
 Add to your OpenCode config:
 
 ```jsonc
 // opencode.jsonc
 {
-    "plugin": ["@tarquinen/opencode-dcp@latest"],
+    "plugin": ["@primeinc/opencode-hypeman@latest"],
 }
 ```
 
 Using `@latest` ensures you always get the newest version automatically when OpenCode starts.
 
-> **Note:** If you use OAuth plugins (e.g., for Google or other services), place this plugin last in your `plugin` array to avoid interfering with their authentication flows.
+Restart OpenCode. The plugin will automatically start transforming your prompts.
 
-Restart OpenCode. The plugin will automatically start optimizing your sessions.
+## 🔧 How It Works
 
-## How Pruning Works
+### The Transformation Pipeline
 
-DCP uses multiple tools and strategies to reduce context size:
+1. **Extraction** — Identifies and protects semantic invariants:
+    - Code blocks (triple backticks and inline code)
+    - File paths and directory structures
+    - Command-line instructions
+2. **Transformation** — Applies high-energy modifications to prose:
+    - Adds affirmations and encouragement
+    - Intensifies action verbs
+    - Inserts motivational closings
+3. **Restoration** — Reintegrates protected content byte-perfect
 
-### Tools
+4. **Verification** — Validates semantic integrity; fails open if corrupted
 
-**Discard** — Exposes a `discard` tool that the AI can call to remove completed or noisy tool content from context.
+### Fail-Open Safety
 
-**Extract** — Exposes an `extract` tool that the AI can call to distill valuable context into concise summaries before removing the tool content.
+If the transformation pipeline encounters any errors or detects that an invariant has been corrupted, the system **transparently falls back to the original prompt**. Your workflow never breaks.
 
-### Strategies
+## ⚙️ Configuration
 
-**Deduplication** — Identifies repeated tool calls (e.g., reading the same file multiple times) and keeps only the most recent output. Runs automatically on every request with zero LLM cost.
+Hypeman uses its own config file:
 
-**Supersede Writes** — Prunes write tool inputs for files that have subsequently been read. When a file is written and later read, the original write content becomes redundant since the current file state is captured in the read result. Runs automatically on every request with zero LLM cost.
+- Global: `~/.config/opencode/hypeman.jsonc` (or `hypeman.json`), created automatically on first run
+- Project: `.opencode/hypeman.jsonc` (or `hypeman.json`) in your project's `.opencode` directory
 
-**Purge Errors** — Prunes tool inputs for tools that returned errors after a configurable number of turns (default: 4). Error messages are preserved for context, but the potentially large input content is removed. Runs automatically on every request with zero LLM cost.
-
-Your session history is never modified—DCP replaces pruned content with placeholders before sending requests to your LLM.
-
-## Impact on Prompt Caching
-
-LLM providers like Anthropic and OpenAI cache prompts based on exact prefix matching. When DCP prunes a tool output, it changes the message content, which invalidates cached prefixes from that point forward.
-
-**Trade-off:** You lose some cache read benefits but gain larger token savings from reduced context size and performance improvements through reduced context poisoning. In most cases, the token savings outweigh the cache miss cost—especially in long sessions where context bloat becomes significant.
-
-**Best use case:** Providers that count usage in requests, such as Github Copilot and Google Antigravity have no negative price impact.
-
-## Configuration
-
-DCP uses its own config file:
-
-- Global: `~/.config/opencode/dcp.jsonc` (or `dcp.json`), created automatically on first run
-- Custom config directory: `$OPENCODE_CONFIG_DIR/dcp.jsonc` (or `dcp.json`), if `OPENCODE_CONFIG_DIR` is set
-- Project: `.opencode/dcp.jsonc` (or `dcp.json`) in your project’s `.opencode` directory
-
-<details>
-<summary><strong>Default Configuration</strong> (click to expand)</summary>
+### Default Configuration
 
 ```jsonc
 {
-    "$schema": "https://raw.githubusercontent.com/Opencode-DCP/opencode-dynamic-context-pruning/master/dcp.schema.json",
+    "$schema": "https://raw.githubusercontent.com/primeinc/opencode-hypeman/master/hypeman.schema.json",
     // Enable or disable the plugin
     "enabled": true,
-    // Enable debug logging to ~/.config/opencode/logs/dcp/
+    // Enable debug logging to ~/.config/opencode/logs/hypeman/
     "debug": false,
-    // Notification display: "off", "minimal", or "detailed"
-    "pruneNotification": "detailed",
-    // Protect from pruning for <turns> message turns
-    "turnProtection": {
-        "enabled": false,
-        "turns": 4,
-    },
-    // Protect file operations from pruning via glob patterns
-    // Patterns match tool parameters.filePath (e.g. read/write/edit)
-    "protectedFilePatterns": [],
-    // LLM-driven context pruning tools
-    "tools": {
-        // Shared settings for all prune tools
-        "settings": {
-            // Nudge the LLM to use prune tools (every <nudgeFrequency> tool results)
-            "nudgeEnabled": true,
-            "nudgeFrequency": 10,
-            // Additional tools to protect from pruning
-            "protectedTools": [],
-        },
-        // Removes tool content from context without preservation (for completed tasks or noise)
-        "discard": {
-            "enabled": true,
-        },
-        // Distills key findings into preserved knowledge before removing raw content
-        "extract": {
-            "enabled": true,
-            // Show distillation content as an ignored message notification
-            "showDistillation": false,
-        },
-    },
-    // Automatic pruning strategies
-    "strategies": {
-        // Remove duplicate tool calls (same tool with same arguments)
-        "deduplication": {
-            "enabled": true,
-            // Additional tools to protect from pruning
-            "protectedTools": [],
-        },
-        // Prune write tool inputs when the file has been subsequently read
-        "supersedeWrites": {
-            "enabled": false,
-        },
-        // Prune tool inputs for errored tools after X turns
-        "purgeErrors": {
-            "enabled": true,
-            // Number of turns before errored tool inputs are pruned
-            "turns": 4,
-            // Additional tools to protect from pruning
-            "protectedTools": [],
-        },
-    },
+    // Intensity level: "low", "medium", or "high"
+    "intensityLevel": "medium",
+    // Preserve code blocks during transformation
+    "preserveCodeBlocks": true,
+    // Preserve file paths during transformation
+    "preserveFilePaths": true,
+    // Preserve command-line commands during transformation
+    "preserveCommands": true,
 }
 ```
 
-</details>
+### Intensity Levels
 
-### Turn Protection
-
-When enabled, turn protection prevents tool outputs from being pruned for a configurable number of message turns. This gives the AI time to reference recent tool outputs before they become prunable. Applies to both `discard` and `extract` tools, as well as automatic strategies.
-
-### Protected Tools
-
-By default, these tools are always protected from pruning across all strategies:
-`task`, `todowrite`, `todoread`, `discard`, `extract`, `batch`, `write`, `edit`
-
-The `protectedTools` arrays in each section add to this default list.
+- **low** — Subtle encouragement with minimal modifications
+- **medium** — Balanced energy boost with emphasized action words
+- **high** — Maximum hype with emojis and all-caps affirmations 🔥
 
 ### Config Precedence
 
 Settings are merged in order:
-Defaults → Global (`~/.config/opencode/dcp.jsonc`) → Config Dir (`$OPENCODE_CONFIG_DIR/dcp.jsonc`) → Project (`.opencode/dcp.jsonc`).
-Each level overrides the previous, so project settings take priority over config-dir and global, which take priority over defaults.
+Defaults → Global (`~/.config/opencode/hypeman.jsonc`) → Project (`.opencode/hypeman.jsonc`).
 
-Restart OpenCode after making config changes.
+Project settings override global settings. Restart OpenCode after making config changes.
 
-## Limitations
+## 🧪 Examples
 
-**Subagents** — DCP is disabled for subagents. Subagents are not designed to be token efficient; what matters is that the final message returned to the main agent is a concise summary of findings. DCP's pruning could interfere with this summarization behavior.
+### Input (Original Prompt)
 
-## License
+```
+Fix the bug in src/utils/parser.ts where it crashes on empty input
+```
+
+### Output (Medium Intensity)
+
+```
+AWESOME! absolutely FIX the bug in src/utils/parser.ts where it crashes on empty input
+
+LET'S CRUSH THIS!
+```
+
+### Protected Invariants
+
+Notice how `src/utils/parser.ts` remains untouched — semantic integrity preserved!
+
+## 🎨 Use Cases
+
+- **Breaking through agent hesitation** — When your agent is overly cautious
+- **Boosting creative tasks** — For brainstorming and ideation sessions
+- **Long sessions** — Maintaining energy across extended coding marathons
+- **Testing prompts** — Experimenting with affective mirroring effects
+
+## ⚠️ Limitations
+
+- **Experimental** — Based on observed LLM behavior patterns, not guaranteed effects
+- **Context dependent** — Results may vary by model and task type
+- **Not a silver bullet** — Cannot fix fundamentally unclear or incorrect prompts
+
+## 🔒 Safety & Privacy
+
+- All transformations happen locally before sending to the LLM
+- No data is sent to external services
+- Debug logs are stored locally only (if enabled)
+- Fail-open design prevents workflow disruption
+
+## 📚 Theoretical Background
+
+This implementation is based on the architectural specification detailed in the "OpenCode Pre-Hook Architecture: The Hypeman Protocol for Affective Mirroring and Semantic Integrity" research document. The core insight is that LLMs trained on human dialogue patterns respond to social cues embedded in prompts, including emotional register and energy level.
+
+By intercepting prompts at the `chat.userPrompt.submit` hook — before they reach the agent's cognitive loop — Hypeman rewrites the user's reality as perceived by the model, enabling affective entrainment while maintaining technical precision.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit issues or pull requests.
+
+## 📄 License
 
 MIT
+
+## 🙏 Acknowledgments
+
+This plugin builds upon research into LLM psychology, prompt engineering, and the OpenCode plugin ecosystem. Special thanks to the OpenCode team for providing the extensibility framework that makes this kind of experimentation possible.
