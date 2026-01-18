@@ -12,7 +12,7 @@ interface InvariantBlock {
 // Regex patterns for semantic invariants
 const CODE_BLOCK_REGEX = /```[\s\S]*?```/g
 const INLINE_CODE_REGEX = /`[^`\n]+`/g
-const FILE_PATH_REGEX = /(?:^|\s)([./~]?(?:[\w-]+\/)+[\w.-]+\.[a-zA-Z0-9]+)(?:\s|$)/g
+const FILE_PATH_REGEX = /[./~]?(?:[\w-]+\/)+[\w.-]+\.[a-zA-Z0-9]+/g
 const COMMAND_LINE_REGEX = /(?:^|\n)\s*[$>]\s*([^\n]+)/g
 
 // High-energy transformation patterns by intensity
@@ -145,44 +145,32 @@ export class HypemanTransformer {
 
         // Extract file paths
         if (this.config.preserveFilePaths) {
-            const pathMatches = Array.from(sanitized.matchAll(FILE_PATH_REGEX))
-            for (const match of pathMatches.reverse()) {
+            sanitized = sanitized.replace(FILE_PATH_REGEX, (match) => {
                 const placeholder = `<<<HYPEMAN_PATH_${placeholderCounter++}>>>`
-                const fullMatch = match[0]
-                const offset = match.index!
                 invariants.push({
                     type: "path",
                     placeholder,
-                    content: fullMatch.trim(),
-                    startIndex: offset,
-                    endIndex: offset + fullMatch.length,
+                    content: match,
+                    startIndex: 0, // Not used in simpler approach
+                    endIndex: 0,
                 })
-                sanitized =
-                    sanitized.slice(0, offset) +
-                    placeholder +
-                    sanitized.slice(offset + fullMatch.length)
-            }
+                return placeholder
+            })
         }
 
         // Extract commands
         if (this.config.preserveCommands) {
-            const cmdMatches = Array.from(sanitized.matchAll(COMMAND_LINE_REGEX))
-            for (const match of cmdMatches.reverse()) {
+            sanitized = sanitized.replace(COMMAND_LINE_REGEX, (match) => {
                 const placeholder = `<<<HYPEMAN_CMD_${placeholderCounter++}>>>`
-                const fullMatch = match[0]
-                const offset = match.index!
                 invariants.push({
                     type: "command",
                     placeholder,
-                    content: fullMatch,
-                    startIndex: offset,
-                    endIndex: offset + fullMatch.length,
+                    content: match,
+                    startIndex: 0,
+                    endIndex: 0,
                 })
-                sanitized =
-                    sanitized.slice(0, offset) +
-                    placeholder +
-                    sanitized.slice(offset + fullMatch.length)
-            }
+                return placeholder
+            })
         }
 
         return { sanitized, invariants }
