@@ -146,4 +146,10 @@ MIT
 
 ## 🙏 Acknowledgments
 
-This plugin builds upon research into LLM psychology, prompt engineering, and the OpenCode plugin ecosystem. Special thanks to the OpenCode team for providing the extensibility framework that makes this kind of experimentation possible.
+This plugin is derived from the [OpenCode Dynamic Context Pruning (DCP) plugin](https://github.com/Tarquinen/opencode-dynamic-context-pruning) by [@tarquinen](https://github.com/Tarquinen). The original DCP plugin provided the foundational OpenCode plugin architecture, configuration system patterns, and hook integration approach that this implementation builds upon. The DCP project is licensed under the MIT License, Copyright (c) 2025 tarquinen.
+
+Special thanks to:
+
+- **[@tarquinen](https://github.com/Tarquinen)** for creating the original DCP plugin and establishing the plugin architecture patterns
+- The **OpenCode team** for providing the extensibility framework that makes this kind of experimentation possible
+- The broader community researching LLM psychology, prompt engineering, and affective mirroring techniques
