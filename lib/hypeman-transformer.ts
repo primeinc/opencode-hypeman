@@ -15,6 +15,10 @@ const INLINE_CODE_REGEX = /`[^`\n]+`/g
 const FILE_PATH_REGEX = /[./~]?(?:[\w-]+\/)+[\w.-]+\.[a-zA-Z0-9]+/g
 const COMMAND_LINE_REGEX = /(?:^|\n)\s*[$>]\s*([^\n]+)/g
 
+// Transformation probability constants
+const OPENING_AFFIRMATION_CHANCE = 0.2 // 20% chance to add opening affirmation
+const CLOSING_MOTIVATION_CHANCE = 0.3 // 30% chance to add closing motivation
+
 // High-energy transformation patterns by intensity
 const HYPE_PATTERNS = {
     low: {
@@ -182,9 +186,9 @@ export class HypemanTransformer {
     private applyHypeTransformation(text: string): string {
         const patterns = HYPE_PATTERNS[this.config.intensityLevel]
 
-        // Add opening affirmation (20% chance)
+        // Add opening affirmation
         let result = text
-        if (Math.random() < 0.2) {
+        if (Math.random() < OPENING_AFFIRMATION_CHANCE) {
             const affirmation =
                 patterns.affirmations[Math.floor(Math.random() * patterns.affirmations.length)]
             result = `${affirmation} ${result}`
@@ -200,8 +204,8 @@ export class HypemanTransformer {
             },
         )
 
-        // Add closing motivation (30% chance)
-        if (Math.random() < 0.3) {
+        // Add closing motivation
+        if (Math.random() < CLOSING_MOTIVATION_CHANCE) {
             const closing = patterns.closings[Math.floor(Math.random() * patterns.closings.length)]
             result = `${result}\n\n${closing}`
         }

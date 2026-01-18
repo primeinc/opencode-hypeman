@@ -25,6 +25,8 @@ const defaultConfig: HypemanConfig = {
 const GLOBAL_CONFIG_DIR = join(homedir(), ".config", "opencode")
 const GLOBAL_CONFIG_PATH_JSONC = join(GLOBAL_CONFIG_DIR, "hypeman.jsonc")
 const GLOBAL_CONFIG_PATH_JSON = join(GLOBAL_CONFIG_DIR, "hypeman.json")
+const SCHEMA_URL =
+    "https://raw.githubusercontent.com/primeinc/opencode-hypeman/master/hypeman.schema.json"
 
 function findOpencodeDir(startDir: string): string | null {
     let current = startDir
@@ -74,7 +76,7 @@ function createDefaultConfig(): void {
     }
 
     const configContent = `{
-  "$schema": "https://raw.githubusercontent.com/primeinc/opencode-hypeman/master/hypeman.schema.json",
+  "$schema": "${SCHEMA_URL}",
   // Enable or disable the plugin
   "enabled": true,
   // Enable debug logging to ~/.config/opencode/logs/hypeman/
